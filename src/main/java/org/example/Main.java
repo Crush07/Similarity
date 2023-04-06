@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 public class Main {
     public static void main(String[] args) {
         // TODO: 2023/4/2 创建两个ArrayList，并给两个ArrayList赋值随机字母
-        List<Character> list1 = new ArrayList<>(10);
+        List<Character> list1 = new ArrayList<>(20);
         List<Integer> list2 = new ArrayList<>(10);
 
-        for(int i = 0;i < 10;i++){
+        for(int i = 0;i < 20;i++){
             while(true){
                 char v = (char)('A'+(int)(Math.random() * 26));
                 if(list1.stream().noneMatch(s -> s == v)) {
@@ -20,6 +20,9 @@ public class Main {
                     break;
                 }
             }
+        }
+
+        for(int i = 0;i < 10;i++){
             while (true){
                 int v = (int)(Math.random() * 100);
                 if(list2.stream().noneMatch(s -> s == v)){
