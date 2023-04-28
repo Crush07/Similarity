@@ -22,9 +22,9 @@ public class Main {
             }
         }
 
-        for(int i = 0;i < 10;i++){
+        for(int i = 0;i < 40;i++){
             while (true){
-                int v = (int)(Math.random() * 100);
+                int v = (int)(Math.random() * 1000);
                 if(list2.stream().noneMatch(s -> s == v)){
                     list2.add(v);
                     break;
@@ -32,7 +32,117 @@ public class Main {
             }
         }
 
+        System.out.println(list2);
+
         // TODO: 2023/4/2 创建map用于保存每两个元素的相似度，每两个元素的相似度用100以内的随机数
+
+        List<Map<Character,List<ValueSimilarity>>> allSimilarity = new ArrayList<>();
+        HashMap<Character,List<MatchElement<Character>>> map = new HashMap<>();
+        int eachSize = 2;
+        for(int c = 0;c < eachSize;c++){
+            List<Integer> l = new ArrayList<>();
+            for(int d = c;d < list2.size();d += eachSize){
+                l.add(list2.get(d));
+            }
+            getResult(list1,l,map,allSimilarity);
+        }
+        List<Map.Entry<Character,List<MatchElement<Character>>>> list = new LinkedList<>(map.entrySet());
+
+        list = list.stream().sorted((v1,v2) -> {
+
+            List<MatchElement<Character>> value1 = v1.getValue();
+            double max1 = 0;
+            HashSet<Integer> diff1 = new HashSet<>();
+            for (int i = 0; i < value1.size(); i++) {
+                if(max1 < value1.get(i).getValue().get(0).getSimilarity()){
+                    max1 = value1.get(i).getValue().get(0).getSimilarity();
+                }
+                diff1.add(value1.get(i).getValue().get(0).getValue());
+            }
+
+
+            List<MatchElement<Character>> value2 = v2.getValue();
+            double max2 = 0;
+            HashSet<Integer> diff2 = new HashSet<>();
+            for (int i = 0; i < value2.size(); i++) {
+                if(max2 < value2.get(i).getValue().get(0).getSimilarity()){
+                    max2 = value2.get(i).getValue().get(0).getSimilarity();
+                }
+                diff2.add(value2.get(i).getValue().get(0).getValue());
+            }
+
+            if((max1 - (diff1.size() - 1) * eachSize * 100) == (max2 - (diff2.size() - 1) * eachSize * 100)){
+                return 0;
+            }else if((max1 - (diff1.size() - 1) * eachSize * 100) > (max2 - (diff2.size() - 1) * eachSize * 100)){
+                return -1;
+            }else{
+                return 1;
+            }
+
+        }).collect(Collectors.toList());
+
+        list.forEach(System.out::println);
+
+        for(int i = 0;i < list.size() - 1;i++){
+            List<MatchElement<Character>> value = list.get(i).getValue();
+            int max = 0;
+            for(int j = 0;j < value.size();j++){
+                MatchElement<Character> element = value.get(j);
+                //查找key匹配的最相似且，没有加入过matchSet的value
+                if(value.get(max).getValue().get(0).getSimilarity() < element.getValue().get(0).getSimilarity()){
+                    max = j;
+                }
+            }
+
+            List<Integer> valueForKey = new ArrayList<>();
+            for(int j = max % eachSize;j < list2.size();j += eachSize){
+                if(list2.get(j).equals(value.get(max).getValue().get(0).getValue())){
+                    for(int k = j - j % eachSize;k < j - j % eachSize + eachSize;k++){
+                        valueForKey.add(list2.get(k));
+                    }
+                    break;
+                }
+            }
+            System.out.println(valueForKey);
+
+            for(int k = 0;k < valueForKey.size();k++){
+                for(int j = i + 1;j < list.size();j++){
+                    if(list.get(j).getValue().get(k).getValue().get(0).getValue().equals(valueForKey.get(k))){
+                        int nowSimilarities = 0;
+                        List<ValueSimilarity> valueSimilarities = allSimilarity.get(k).get(list.get(i).getKey());
+                        for(int l = 0;l < valueSimilarities.size();l++){
+                            if(valueSimilarities.get(l).getValue().equals(valueForKey.get(k))){
+                                nowSimilarities = valueSimilarities.get(l).getSimilarity();
+                                break;
+                            }
+                        }
+                        int anotherSimilarities = 0;
+                        List<ValueSimilarity> anotherValueSimilarities = allSimilarity.get(k).get(list.get(j).getKey());
+                        for(int l = 0;l < anotherValueSimilarities.size();l++){
+                            if(anotherValueSimilarities.get(l).getValue().equals(list.get(i).getValue().get(k).getValue().get(0).getValue())){
+                                anotherSimilarities = anotherValueSimilarities.get(l).getSimilarity();
+                                break;
+                            }
+                        }
+
+                        list.get(j).getValue().get(k).getValue().get(0).setValue(list.get(i).getValue().get(k).getValue().get(0).getValue());
+                        list.get(j).getValue().get(k).getValue().get(0).setSimilarity(anotherSimilarities);
+
+                        list.get(i).getValue().get(k).getValue().get(0).setValue(valueForKey.get(k));
+                        list.get(i).getValue().get(k).getValue().get(0).setSimilarity(nowSimilarities);
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        list.forEach(System.out::println);
+
+    }
+
+    static void getResult(List<Character> list1, List<Integer> list2, HashMap<Character,List<MatchElement<Character>>> map,List<Map<Character,List<ValueSimilarity>>> allSimilarity){
+
         Map<Character,List<ValueSimilarity>> similarity = new HashMap<>();
         for(int i = 0;i < list1.size();i++){
             for(int j = 0;j < list2.size();j++){
@@ -49,10 +159,7 @@ public class Main {
             }
         }
 
-        // TODO: 2023/4/2 数组相似度map
-        for(Map.Entry<Character,List<ValueSimilarity>> entry : similarity.entrySet()){
-            System.out.println(entry.getKey() + ":" + entry.getValue());
-        }
+        allSimilarity.add(similarity);
 
         // TODO: 2023/4/5 每一个 ValueSimilarity按照相似度排序
         for(Map.Entry<Character,List<ValueSimilarity>> entry : similarity.entrySet()){
@@ -94,7 +201,9 @@ public class Main {
 
         // TODO: 2023/4/2 输出匹配结果，并附上每对的相似度
         for(int i = 0;i < list3.size();i++){
-            System.out.println(list3.get(i));
+            List<MatchElement<Character>> matchElements = map.getOrDefault(list3.get(i).getKey(),new ArrayList<>());
+            matchElements.add(list3.get(i));
+            map.put(list3.get(i).getKey(),matchElements);
         }
     }
 }
