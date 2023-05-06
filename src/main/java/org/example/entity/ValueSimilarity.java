@@ -3,8 +3,10 @@ package org.example.entity;
 import lombok.Data;
 
 @Data
-public class ValueSimilarity {
-    Integer value;
+public class ValueSimilarity<T> {
+
+    T value;
 
     Integer similarity;
+
 }
